@@ -1,0 +1,58 @@
+# 用途：按维护者明确批准的撤回清单，删除旧 Release、标签及对应构建记录，不影响当前发布。
+name: Withdraw superseded public version
+on:
+  push:
+    branches: [main]
+    paths: [.github/public-cleanup.json]
+permissions:
+  contents: read
+jobs:
+  withdraw:
+    if: github.repository == 'wsmzzs/offline-private-knowledge'
+    runs-on: windows-latest
+    timeout-minutes: 10
+    # 删除 Release/标签需要 contents，删除旧构建日志及附件需要 actions；只使用临时任务令牌。
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Remove only the explicitly withdrawn version and its runs
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $config = Get-Content .github/public-cleanup.json -Raw | ConvertFrom-Json
+          if ($config.withdrawnTag -ne 'v0.1.0' -or $config.withdrawnRuns.Count -ne 3) { throw '撤回清单不符合本次批准范围' }
+          $headers = @{ Authorization = 'Bearer ' + $env:GH_TOKEN; Accept = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = '2022-11-28' }
+          $repoApi = 'https://api.github.com/repos/' + $env:GITHUB_REPOSITORY + '/'
+          # GET 只将明确的 404 视为已清理；网络错误或权限错误必须使任务失败，不能伪装成删除成功。
+          function Read-OptionalResource([string]$RelativePath) {
+            try { return Invoke-RestMethod -Uri ($repoApi + $RelativePath) -Headers $headers -Method Get }
+            catch {
+              if ([int]$_.Exception.Response.StatusCode -eq 404) { return $null }
+              throw
+            }
+          }
+          $release = Read-OptionalResource ('releases/tags/' + $config.withdrawnTag)
+          if ($null -ne $release) {
+            Invoke-RestMethod -Uri ($repoApi + 'releases/' + $release.id) -Headers $headers -Method Delete | Out-Null
+            Write-Host 'Withdrawn release and attached downloads removed.'
+          }
+          $tag = Read-OptionalResource ('git/ref/tags/' + $config.withdrawnTag)
+          if ($null -ne $tag) {
+            Invoke-RestMethod -Uri ($repoApi + 'git/refs/tags/' + $config.withdrawnTag) -Headers $headers -Method Delete | Out-Null
+            Write-Host 'Withdrawn tag removed.'
+          }
+          foreach ($runId in $config.withdrawnRuns) {
+            if ($runId -notmatch '^\d{11}$' -or $runId -eq $env:GITHUB_RUN_ID) { throw '构建记录不在批准范围' }
+            $run = Read-OptionalResource ('actions/runs/' + $runId)
+            if ($null -ne $run) {
+              Invoke-RestMethod -Uri ($repoApi + 'actions/runs/' + $runId) -Headers $headers -Method Delete | Out-Null
+              Write-Host ('Withdrawn workflow run removed: ' + $runId)
+            }
+          }
+          Write-Host 'WITHDRAWAL_PASS'

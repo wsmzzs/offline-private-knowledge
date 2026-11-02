@@ -1,0 +1,239 @@
+<!-- 用途：三栏桌面界面。绑定负责显示；事件只把操作转交 MainViewModel，不在 XAML 中实现业务。 -->
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:PrivateKnowledge.Desktop.ViewModels" xmlns:api="using:PrivateKnowledge.Client"
+        x:Class="PrivateKnowledge.Desktop.MainWindow" x:DataType="vm:MainViewModel"
+        Title="离线私库 · 有据问答" Width="1180" Height="840" MinWidth="960" MinHeight="680"
+        Background="#FFFFFF" WindowStartupLocation="CenterScreen">
+  <Grid RowDefinitions="Auto,Auto,*,Auto">
+    <!-- 顶部显示真实健康状态；连接设置和手动刷新都不会调用模型生成答案。 -->
+    <Border Padding="26,22" BorderBrush="#E1E7EF" BorderThickness="0,0,0,1" Background="White">
+      <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+        <StackPanel Spacing="6">
+          <TextBlock Name="BrandTitle" Text="离线私库 · 有据问答" FontSize="25" FontWeight="SemiBold" Foreground="#18365E" />
+          <TextBlock Text="用自己的资料，问有出处的答案。" Foreground="#596778" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" IsVisible="{Binding !SetupVisible}">
+          <Button Name="RuntimeButton" Content="{Binding ModeStatus}" Click="OnToggleRuntime" Foreground="#287955" Background="#F5F7FB" />
+          <Button Name="DownloadModelsButton" Content="模型管理" IsVisible="{Binding IsLocalMode}" IsEnabled="{Binding CanManageModels}" Click="OnDownloadModels" />
+          <Button Name="SettingsButton" Content="设置" Click="OnToggleSettings" />
+        </StackPanel>
+      </Grid>
+    </Border>
+    <!-- 状态来自真实检查；进度条只表示正在准备，不虚构完成百分比。 -->
+    <Border Grid.Row="1" Padding="26,10" Background="#F5F7FB" BorderBrush="#E1E7EF" BorderThickness="0,0,0,1">
+      <StackPanel Spacing="8">
+        <TextBlock Name="ConnectionLabel" Text="{Binding ConnectionStatus}" Classes="muted" TextWrapping="Wrap" />
+        <ProgressBar IsVisible="{Binding IsPreparing}" IsIndeterminate="True" Height="3" />
+        <Grid IsVisible="{Binding RuntimeVisible}" ColumnDefinitions="*,Auto" Margin="0,5,0,0">
+          <StackPanel Spacing="5"><TextBlock Text="运行状态" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding EnvironmentDescription}" Classes="muted" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding AppliedServiceAddress}" Classes="muted" />
+          </StackPanel>
+          <Button Name="RefreshButton" Grid.Column="1" Content="重新准备 / 检查连接" IsEnabled="{Binding CanPrepare}" Click="OnRefresh" Margin="14,0,0,0" VerticalAlignment="Center" />
+        </Grid>
+      </StackPanel>
+    </Border>
+    <!-- 设置草稿只在保存后生效；设置页独占内容区，不挤压聊天输入框。 -->
+    <!-- 引导复用同一个 ViewModel 和服务拥有权；页面切换不创建另一套程序或修改企业服务器。 -->
+    <ScrollViewer Grid.Row="2" IsVisible="{Binding SetupVisible}" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel MaxWidth="820" Margin="26,22" Spacing="18">
+        <TextBlock Text="{Binding SetupStepLabel}" Foreground="#2563EB" FontWeight="SemiBold" />
+        <StackPanel IsVisible="{Binding SetupWelcomeVisible}" Spacing="16">
+          <TextBlock Text="把自己的资料，变成随时可问的知识库" FontSize="24" FontWeight="SemiBold" TextWrapping="Wrap" />
+          <TextBlock Text="完成一次配置，之后直接打开使用。日常问答可离线运行，安装和下载模型需要联网。" Classes="muted" TextWrapping="Wrap" />
+          <Grid ColumnDefinitions="*,*">
+            <Button Name="SetupLocalButton" Classes="mode" Classes.selected="{Binding LocalSettingsVisible}" Click="OnLocalMode" HorizontalAlignment="Stretch" Margin="0,0,8,0">
+              <StackPanel Spacing="8"><TextBlock Text="在这台电脑使用" FontSize="18" FontWeight="SemiBold" /><TextBlock Text="资料和模型在本机处理，打开时自动准备。" TextWrapping="Wrap" /></StackPanel>
+            </Button>
+            <Button Grid.Column="1" Name="SetupEnterpriseButton" Classes="mode" Classes.selected="{Binding EnterpriseSettingsVisible}" Click="OnEnterpriseMode" HorizontalAlignment="Stretch" Margin="8,0,0,0">
+              <StackPanel Spacing="8"><TextBlock Text="连接企业知识服务" FontSize="18" FontWeight="SemiBold" /><TextBlock Text="填写 IT 提供的连接信息，多台电脑共享服务。" TextWrapping="Wrap" /></StackPanel>
+            </Button>
+          </Grid>
+        </StackPanel>
+        <StackPanel IsVisible="{Binding SetupEnvironmentVisible}" Spacing="14">
+          <TextBlock Text="准备问答环境" FontSize="23" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding SetupEnvironmentHint}" Classes="muted" TextWrapping="Wrap" />
+          <StackPanel IsVisible="{Binding EnterpriseSettingsVisible}" Spacing="10">
+            <TextBlock Text="企业服务地址" /><TextBox Name="SetupEnterpriseAddress" Text="{Binding EnterpriseAddress}" Watermark="填写 IT 提供的 HTTP/HTTPS 根地址" />
+            <TextBlock Text="访问密钥" /><TextBox Name="SetupEnterpriseKey" Text="{Binding EnterpriseKey}" PasswordChar="●" Watermark="由 IT 提供，只在本次打开期间保留" />
+          </StackPanel>
+          <Border Background="#F5F7FB" Padding="18" CornerRadius="10">
+            <StackPanel Spacing="13">
+              <TextBlock Text="模型运行环境" FontWeight="SemiBold" /><TextBlock Name="SetupOllamaStatus" Text="{Binding SetupOllamaText}" TextWrapping="Wrap" />
+              <TextBlock Text="回答模型 · 整理资料并生成答案" FontWeight="SemiBold" /><TextBlock Text="{Binding SetupChatText}" TextWrapping="Wrap" />
+              <ComboBox Name="SetupModelSelector" ItemsSource="{Binding Models}" SelectedItem="{Binding SelectedModel, Mode=TwoWay}" HorizontalAlignment="Stretch" PlaceholderText="也可选择已安装的回答模型" IsEnabled="{Binding CanSetupAction}" />
+              <TextBlock Text="检索模型 · 根据问题查找相关资料" FontWeight="SemiBold" /><TextBlock Name="SetupEmbeddingStatus" Text="{Binding SetupEmbeddingText}" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+          <StackPanel IsVisible="{Binding LocalSettingsVisible}" Orientation="Horizontal" Spacing="10">
+            <Button Content="打开 Ollama 安装页面" Click="OnOpenOllama" IsEnabled="{Binding CanSetupAction}" />
+            <Button Name="SetupDownloadChat" Content="下载推荐回答模型" Click="OnSetupDownloadChat" IsEnabled="{Binding CanSetupDownloadChat}" />
+            <Button Name="SetupDownloadEmbedding" Content="下载检索模型" Click="OnSetupDownloadEmbedding" IsEnabled="{Binding CanSetupDownloadEmbedding}" />
+          </StackPanel>
+          <Button Name="SetupCheckButton" Content="检查并准备 / 重新检查" Click="OnSetupCheck" IsEnabled="{Binding CanSetupAction}" HorizontalAlignment="Left" />
+          <StackPanel IsVisible="{Binding IsSetupDownloading}" Spacing="8">
+            <ProgressBar Name="SetupDownloadProgress" Value="{Binding SetupProgress}" IsIndeterminate="{Binding SetupProgressIndeterminate}" Height="7" />
+            <TextBlock Text="进度对应当前文件；文件接收后还会校验，显示完成才表示可用。" Classes="muted" TextWrapping="Wrap" />
+            <Button Content="取消本次下载" Click="OnSetupCancelDownload" HorizontalAlignment="Left" />
+          </StackPanel>
+        </StackPanel>
+        <StackPanel IsVisible="{Binding SetupKnowledgeVisible}" Spacing="14">
+          <TextBlock Text="选择你的知识资料文件夹" FontSize="23" FontWeight="SemiBold" />
+          <TextBlock Text="每个一级子文件夹是一套知识库。把资料放好，后续添加、替换文件都会自动更新，无需反复导入。" Classes="muted" TextWrapping="Wrap" />
+          <Grid ColumnDefinitions="*,Auto"><TextBox Name="SetupKnowledgePath" Text="{Binding KnowledgePath}" Watermark="留空：使用服务现有目录，发布包默认带虚构示例" />
+            <Button Grid.Column="1" Content="选择文件夹" Click="OnChooseFolder" Margin="10,0,0,0" /></Grid>
+          <Button Content="体验随包虚构示例" Click="OnSetupUseSamples" HorizontalAlignment="Left" />
+          <Border Background="#F5F7FB" Padding="18" CornerRadius="10"><StackPanel Spacing="8">
+            <TextBlock Text="资料根目录 / 项目甲 / 操作手册.md" /><TextBlock Text="资料根目录 / 项目乙 / 岗位说明.docx" />
+            <TextBlock Text="支持 TXT、Markdown、Word、文字型 PDF 和常规 Excel。扫描图片暂不支持。" Classes="muted" TextWrapping="Wrap" />
+          </StackPanel></Border>
+          <TextBlock Text="{Binding LibraryLocation}" Classes="muted" TextWrapping="Wrap" />
+        </StackPanel>
+        <StackPanel IsVisible="{Binding SetupIndexVisible}" Spacing="14">
+          <TextBlock Text="资料正在准备，完成后就能提问" FontSize="23" FontWeight="SemiBold" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding SetupIndexHint}" Classes="muted" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding LibraryLocation}" Classes="muted" TextWrapping="Wrap" />
+          <ItemsControl ItemsSource="{Binding Bases}"><ItemsControl.ItemTemplate><DataTemplate x:DataType="api:KnowledgeBaseInfo">
+            <Border Background="#F5F7FB" CornerRadius="8" Padding="14" Margin="0,4"><StackPanel Spacing="5">
+              <TextBlock Text="{Binding Id}" FontWeight="SemiBold" /><TextBlock Text="{Binding DisplayStatus}" />
+              <TextBlock Text="{Binding Message}" Classes="muted" TextWrapping="Wrap" />
+            </StackPanel></Border>
+          </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+          <TextBlock Text="首次整理可能需要几分钟。之后资料没有变化会复用索引；重新启动不需要再下载模型。" Classes="muted" TextWrapping="Wrap" />
+        </StackPanel>
+        <Border BorderBrush="#DDE3EB" BorderThickness="1" CornerRadius="8" Padding="14"><TextBlock Name="SetupMessage" Text="{Binding SetupMessage}" TextWrapping="Wrap" /></Border>
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+          <Button Name="SetupBackButton" Content="上一步" IsEnabled="{Binding CanSetupBack}" Click="OnSetupBack" />
+          <Button Name="SetupNextButton" Grid.Column="2" Content="下一步" IsVisible="{Binding !SetupIndexVisible}" IsEnabled="{Binding CanSetupAction}" Classes="primary" Click="OnSetupNext" />
+          <Button Name="SetupFinishButton" Grid.Column="3" Content="保存配置并进入问答" IsVisible="{Binding SetupIndexVisible}" IsEnabled="{Binding CanFinishSetup}" Classes="primary" Click="OnSetupFinish" />
+        </Grid>
+      </StackPanel>
+    </ScrollViewer>
+    <ScrollViewer Grid.Row="2" IsVisible="{Binding SettingsPageVisible}" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel MaxWidth="800" Margin="26,25" Spacing="20">
+        <Grid ColumnDefinitions="*,Auto"><StackPanel Spacing="4"><TextBlock Text="使用方式与设置" FontSize="20" FontWeight="SemiBold" />
+          <TextBlock Text="通常只需配置一次，之后打开即可使用。" Classes="muted" /></StackPanel>
+          <Button Grid.Column="1" Content="返回问答" Click="OnToggleSettings" />
+        </Grid>
+        <Grid ColumnDefinitions="*,*">
+          <Button Name="LocalModeButton" Classes="mode" Classes.selected="{Binding LocalSettingsVisible}" Click="OnLocalMode" HorizontalAlignment="Stretch" Margin="0,0,7,0">
+            <StackPanel Spacing="5"><TextBlock Text="本机使用" FontWeight="SemiBold" FontSize="16" /><TextBlock Text="资料和模型在本机处理，打开自动准备。" Classes="muted" TextWrapping="Wrap" /></StackPanel>
+          </Button>
+          <Button Grid.Column="1" Name="EnterpriseModeButton" Classes="mode" Classes.selected="{Binding EnterpriseSettingsVisible}" Click="OnEnterpriseMode" HorizontalAlignment="Stretch" Margin="7,0,0,0">
+            <StackPanel Spacing="5"><TextBlock Text="连接企业服务器" FontWeight="SemiBold" FontSize="16" /><TextBlock Text="多人共享，由 IT 统一管理。" Classes="muted" TextWrapping="Wrap" /></StackPanel>
+          </Button>
+        </Grid>
+        <Border IsVisible="{Binding LocalSettingsVisible}" BorderBrush="#E1E7EF" BorderThickness="1" CornerRadius="10" Padding="22">
+          <StackPanel Spacing="12">
+            <TextBlock Text="本机使用" FontSize="17" FontWeight="SemiBold" />
+            <TextBlock Text="资料与模型在这台电脑处理。打开自动准备，关闭自动收尾。" Classes="muted" TextWrapping="Wrap" />
+            <TextBlock Text="我的知识资料文件夹" />
+            <Grid ColumnDefinitions="*,Auto"><TextBox Name="KnowledgePathInput" Text="{Binding KnowledgePath}" Watermark="留空：沿用服务现有的资料目录" />
+              <Button Grid.Column="1" Margin="10,0,0,0" Content="选择文件夹" Click="OnChooseFolder" /></Grid>
+            <TextBlock Text="每个子文件夹是一个项目，添加或替换文件后自动更新。已有服务使用其他目录时，会提示先关闭它，不会擅自改写。" Classes="muted" TextWrapping="Wrap" />
+            <TextBlock Text="本机连接地址" />
+            <TextBox Name="AddressInput" Text="{Binding ServiceAddress}" Watermark="http://127.0.0.1:5088/" />
+            <Border Background="#F5F7FB" CornerRadius="8" Padding="15"><StackPanel Spacing="6">
+              <TextBlock Text="打开即可用，关闭自动收尾" FontWeight="SemiBold" />
+              <TextBlock Text="退出时只停止当前客户端启动的问答程序。已有服务和其他软件使用的 Ollama 保持运行。" Classes="muted" TextWrapping="Wrap" />
+              <TextBlock Text="问答可离线使用；首次安装 Ollama、下载模型需要联网。" Classes="muted" TextWrapping="Wrap" />
+            </StackPanel></Border>
+          </StackPanel>
+        </Border>
+        <Border IsVisible="{Binding EnterpriseSettingsVisible}" BorderBrush="#E1E7EF" BorderThickness="1" CornerRadius="10" Padding="22">
+          <StackPanel Spacing="12">
+            <TextBlock Text="连接企业服务器" FontSize="17" FontWeight="SemiBold" />
+            <TextBlock Text="企业知识服务地址" />
+            <TextBox Name="EnterpriseAddressInput" Text="{Binding EnterpriseAddress}" Watermark="填写 IT 提供的 HTTP/HTTPS 根地址" />
+            <TextBlock Text="访问密钥" />
+            <TextBox Name="EnterpriseKeyInput" Text="{Binding EnterpriseKey}" PasswordChar="●" Watermark="由 IT 提供，只保留在本次打开期间" />
+            <TextBlock Text="IT 可用 PRIVATEKNOWLEDGE_API_KEY 环境变量预先配置。密钥不会写入客户端设置文件。" Classes="muted" TextWrapping="Wrap" />
+            <Border Background="#F5F7FB" CornerRadius="8" Padding="15"><StackPanel Spacing="6">
+              <TextBlock Text="服务由企业统一管理" FontWeight="SemiBold" />
+              <TextBlock Text="打开时连接，退出时只断开当前客户端，服务器和其他同事继续使用。" Classes="muted" TextWrapping="Wrap" />
+              <TextBlock Text="模型与资料由 IT 维护；当前版本用共享密钥访问该实例全部知识库，尚不提供个人账号或分项目权限。" Classes="muted" TextWrapping="Wrap" />
+            </StackPanel></Border>
+          </StackPanel>
+        </Border>
+        <Button Name="ApplySettingsButton" Content="{Binding ApplyLabel}" Classes="primary" IsEnabled="{Binding CanPrepare}" HorizontalAlignment="Right" Click="OnConnect" />
+        <Button Name="ReopenSetupButton" Content="重新打开首次配置" Click="OnOpenSetup" IsEnabled="{Binding CanPrepare}" HorizontalAlignment="Left" />
+      </StackPanel>
+    </ScrollViewer>
+    <Grid Grid.Row="2" IsVisible="{Binding ChatPageVisible}" ColumnDefinitions="204,*,Auto">
+      <!-- 左栏列表来自服务，不把演示项目硬编码成正式数据。 -->
+      <Border Background="#F3F5F8" BorderBrush="#DDE3EB" BorderThickness="0,0,1,0" Padding="12,20">
+        <Grid RowDefinitions="Auto,*,Auto"><TextBlock Margin="8,0,0,12" Text="项目知识库" FontWeight="SemiBold" />
+          <ListBox Grid.Row="1" Name="ProjectList" ItemsSource="{Binding Bases}" SelectedItem="{Binding SelectedBase, Mode=OneWay}" SelectionChanged="OnProjectSelected" Background="Transparent">
+            <ListBox.ItemTemplate><DataTemplate x:DataType="api:KnowledgeBaseInfo">
+              <StackPanel Margin="2,6" Spacing="6"><TextBlock Text="{Binding Id}" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding DisplayStatus}" Classes="muted" TextWrapping="Wrap" /></StackPanel>
+            </DataTemplate></ListBox.ItemTemplate>
+          </ListBox>
+          <StackPanel Grid.Row="2" Margin="8,12,4,0" Spacing="10">
+            <SelectableTextBlock Name="KnowledgeLocationLabel" Text="{Binding LibraryLocation}" Classes="muted" TextWrapping="Wrap" />
+            <TextBlock Classes="muted" Text="替换资料后自动更新。聊天记录仅在本次打开期间保留。" TextWrapping="Wrap" />
+            <Button Content="资料与设置" Click="OnToggleSettings" HorizontalAlignment="Left" />
+          </StackPanel>
+        </Grid>
+      </Border>
+      <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" Margin="22,20">
+        <StackPanel Spacing="6" Margin="0,0,0,16">
+          <Grid ColumnDefinitions="*,Auto"><StackPanel Spacing="5"><TextBlock Text="{Binding ProjectTitle}" FontSize="20" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding ProjectDescription}" Classes="muted" TextWrapping="Wrap" /></StackPanel>
+            <StackPanel Grid.Column="1" Margin="18,0,0,0" Spacing="5"><TextBlock Text="回答模型" Classes="muted" />
+              <ComboBox Name="ModelSelector" Width="220" ItemsSource="{Binding Models}" SelectedItem="{Binding SelectedModel, Mode=OneWay}" SelectionChanged="OnModelSelected"
+                        IsEnabled="{Binding CanSelectModel}" PlaceholderText="请选择可用模型" ToolTip.Tip="{Binding ModelHint}" />
+            </StackPanel>
+          </Grid>
+          <!-- 路径由服务返回，方便发现编辑了另一份同名资料的情况；完成提示保留到下一次更新。 -->
+          <TextBlock Name="KnowledgeUpdateLabel" Text="{Binding KnowledgeUpdateHint}" Classes="muted" TextWrapping="Wrap" />
+          <TextBlock Name="RetrievalLabel" Text="{Binding RetrievalHint}" Classes="muted" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding ModelHint}" Classes="muted" TextWrapping="Wrap" />
+          <TextBlock Text="仅查询当前项目；每次请完整描述问题，不自动继承上一轮。" Classes="muted" TextWrapping="Wrap" /></StackPanel>
+        <!-- 回答按纯文字显示，资料中的链接或脚本不会自动执行。 -->
+        <ScrollViewer Grid.Row="1" Name="ConversationScroll" HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl Name="ConversationItems" ItemsSource="{Binding Turns}">
+            <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:QuestionTurn">
+              <StackPanel Spacing="10" Margin="0,0,0,24">
+                <Border Background="#EAF1FF" CornerRadius="10" Padding="15,13" Margin="28,0,0,0"><SelectableTextBlock Text="{Binding Question}" TextWrapping="Wrap" /></Border>
+                <TextBlock Text="{Binding Status}" Classes="muted" TextWrapping="Wrap" />
+                <SelectableTextBlock Text="{Binding Answer}" TextWrapping="Wrap" />
+                <ItemsControl ItemsSource="{Binding Sources}"><ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:SourceLink">
+                  <Button Classes="source" Tag="{Binding}" Click="OnSource" Margin="0,3">
+                    <TextBlock Text="{Binding Label}" TextWrapping="Wrap" />
+                  </Button>
+                </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+                <Button Content="复制回答" Tag="{Binding}" Click="OnCopy" IsEnabled="{Binding CanCopy}" HorizontalAlignment="Left" />
+              </StackPanel>
+            </DataTemplate></ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+        <StackPanel Grid.Row="2" Spacing="10" Margin="0,12,0,0">
+          <Border BorderBrush="#E1E7EF" BorderThickness="1" CornerRadius="12" Padding="14"><StackPanel Spacing="12">
+          <TextBox Name="QuestionInput" Text="{Binding Question}" MaxLength="1000" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="65" MaxHeight="130" BorderThickness="0"
+                   Watermark="对这个项目有什么不清楚的？请完整描述你的问题。" />
+          <Grid ColumnDefinitions="*,Auto,Auto"><TextBlock Text="Ctrl+Enter 发送 · Enter 换行" Classes="muted" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Name="CancelButton" Content="取消等待" IsVisible="{Binding IsAsking}" Click="OnCancel" Margin="0,0,8,0" />
+            <Button Grid.Column="2" Name="SendButton" Content="发送问题" Classes="primary" IsEnabled="{Binding CanSend}" Click="OnSend" />
+          </Grid>
+          </StackPanel></Border>
+          <TextBlock Text="只查询当前项目 · 回答可查看原文依据" Classes="muted" HorizontalAlignment="Center" />
+        </StackPanel>
+      </Grid>
+      <!-- 右栏使用 Auto 列，收起面板后把空间还给问答区。 -->
+      <Border Grid.Column="2" IsVisible="{Binding SourceVisible}" Width="320" Padding="18,20" Background="#F3F5F8" BorderBrush="#DDE3EB" BorderThickness="1,0,0,0">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
+          <Grid ColumnDefinitions="*,Auto"><TextBlock Text="回答依据" FontSize="17" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Content="收起" Click="OnCloseSource" /></Grid>
+          <TextBlock Grid.Row="1" Margin="0,14,0,8" Text="{Binding SourceTitle}" TextWrapping="Wrap" FontWeight="SemiBold" />
+          <TextBox Grid.Row="2" Text="{Binding SourceExcerpt}" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="150" />
+          <TextBlock Grid.Row="3" Margin="0,12" Text="{Binding SourceStatus}" Classes="muted" TextWrapping="Wrap" />
+          <TextBox Grid.Row="4" Name="DocumentTextBox" Text="{Binding DocumentText}" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" Watermark="完整原文会显示在这里" />
+        </Grid>
+      </Border>
+    </Grid>
+    <Border Grid.Row="3" BorderBrush="#DDE3EB" BorderThickness="0,1,0,0" Padding="18,8">
+      <TextBlock Text="{Binding Notice}" Classes="muted" TextWrapping="Wrap" MinHeight="18" />
+    </Border>
+  </Grid>
+</Window>

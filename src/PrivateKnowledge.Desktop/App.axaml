@@ -1,0 +1,15 @@
+<!-- 用途：应用统一主题和控件样式；第一版使用固定浅色，保持操作界面一致。 -->
+<Application xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="PrivateKnowledge.Desktop.App" RequestedThemeVariant="Light">
+  <Application.Styles>
+    <FluentTheme />
+    <Style Selector="Window"><Setter Property="FontFamily" Value="Microsoft YaHei, Segoe UI" /><Setter Property="FontSize" Value="14" /></Style>
+    <Style Selector="Button"><Setter Property="CornerRadius" Value="6" /><Setter Property="Padding" Value="12,8" /></Style>
+    <Style Selector="Button.primary"><Setter Property="Background" Value="#245AC7" /><Setter Property="Foreground" Value="White" /></Style>
+    <!-- 两种使用方式沿用确认原型的卡片外观；选中颜色仅表示草稿，保存后才生效。 -->
+    <Style Selector="Button.mode"><Setter Property="Background" Value="White" /><Setter Property="BorderBrush" Value="#E1E7EF" /><Setter Property="BorderThickness" Value="1" /><Setter Property="Padding" Value="18" /><Setter Property="HorizontalContentAlignment" Value="Left" /></Style>
+    <Style Selector="Button.mode.selected"><Setter Property="Background" Value="#EAF1FF" /><Setter Property="BorderBrush" Value="#285CC5" /></Style>
+    <Style Selector="TextBlock.muted"><Setter Property="Foreground" Value="#596778" /><Setter Property="FontSize" Value="12" /></Style>
+    <Style Selector="Button.source"><Setter Property="HorizontalAlignment" Value="Stretch" /><Setter Property="HorizontalContentAlignment" Value="Left" /><Setter Property="Foreground" Value="#245AC7" /></Style>
+  </Application.Styles>
+</Application>

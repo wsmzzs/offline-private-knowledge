@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- 独立的新服务使用已有 .NET 9；不改变原 WinForms 学习工程。 -->
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.0.123" />
+    <!-- 读取 Ollama 官方模型库网页结构；只提取文字，不执行页面脚本。 -->
+    <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
+    <!-- 直接读取 Office/PDF 文件，现场不需要安装 Word、Excel 或联网转换服务。 -->
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
+    <PackageReference Include="PdfPig" Version="0.1.16" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.8" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- 源码运行直接读取解决方案下的资料，避免编辑源文件时服务却监视 bin 里的旧副本。
+         发布时仍附带样例，发布包的默认路径继续相对于发布目录。 -->
+    <!-- 发布永远只附带经过检查的虚构资料，不能复制开发者的个人知识库。 -->
+    <Content Include="../../PublicSamples/**/*" Link="SampleKnowledge/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <!-- 只写入本机编译输出，不加入发布文件。双击 bin 中 exe、F5 和 dotnet run 因而使用同一资料目录。
+       环境变量和命令行仍可覆盖它，测试也会传入自己的隔离目录。 -->
+  <Target Name="WriteWorkspaceKnowledgePaths" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true'">
+    <PropertyGroup>
+      <WorkspaceKnowledgeRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../SampleKnowledge').Replace('\', '/'))</WorkspaceKnowledgeRoot>
+      <!-- 开发者已有 SampleKnowledge 时保持路径；公开源码没有私库时使用 PublicSamples。 -->
+      <WorkspaceKnowledgeRoot Condition="!Exists('$(WorkspaceKnowledgeRoot)')">$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../PublicSamples').Replace('\', '/'))</WorkspaceKnowledgeRoot>
+      <WorkspaceKnowledgeData>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../data').Replace('\', '/'))</WorkspaceKnowledgeData>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(TargetDir)appsettings.Workspace.json"
+                      Lines="{&quot;Knowledge&quot;:{&quot;RootPath&quot;:&quot;$(WorkspaceKnowledgeRoot)&quot;,&quot;DataPath&quot;:&quot;$(WorkspaceKnowledgeData)&quot;}}"
+                      Overwrite="true" WriteOnlyWhenDifferent="true" Encoding="UTF-8" />
+  </Target>
+</Project>

@@ -1,0 +1,9 @@
+<Project>
+  <!-- 统一标识当前公开版本，便于维护时区分新旧客户端和服务；不改变 .NET SDK。 -->
+  <PropertyGroup>
+    <Version>0.1.1</Version>
+    <Product>离线私库 · 有据问答</Product>
+    <Authors>Offline Private Library contributors</Authors>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+</Project>

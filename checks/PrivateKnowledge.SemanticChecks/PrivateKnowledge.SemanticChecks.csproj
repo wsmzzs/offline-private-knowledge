@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 真实 Ollama 验收工具：使用虚构资料及独立 SQLite，不加入正式客户端依赖。 -->
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net9.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <ItemGroup><ProjectReference Include="../../src/PrivateKnowledge.Api/PrivateKnowledge.Api.csproj" /></ItemGroup>
+</Project>

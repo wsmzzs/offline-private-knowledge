@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 使用现有 .NET 9；锁定 Avalonia 11 的明确版本，不要求升级 SDK。 -->
+  <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net9.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault><GenerateDocumentationFile>true</GenerateDocumentationFile></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.8" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.8" />
+    <ProjectReference Include="../PrivateKnowledge.Client/PrivateKnowledge.Client.csproj" />
+    <!-- 只建立编译顺序，不把 Web API 类型引用进界面；它始终是独立进程。 -->
+    <ProjectReference Include="../PrivateKnowledge.Api/PrivateKnowledge.Api.csproj" ReferenceOutputAssembly="false" Private="false" />
+  </ItemGroup>
+  <!-- F5 或直接双击客户端都能找到配套 service；Workspace 配置仍指向源码资料。 -->
+  <Target Name="CopyLocalService" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true'">
+    <!-- API 的 bin 可能有旧运行留下的数据库/样例副本；这里只复制程序，不能扩散运行数据。 -->
+    <ItemGroup><LocalServiceFiles Include="../PrivateKnowledge.Api/bin/$(Configuration)/$(TargetFramework)/**/*"
+                                  Exclude="../PrivateKnowledge.Api/bin/$(Configuration)/$(TargetFramework)/data/**/*;../PrivateKnowledge.Api/bin/$(Configuration)/$(TargetFramework)/SampleKnowledge/**/*;../PrivateKnowledge.Api/bin/$(Configuration)/$(TargetFramework)/**/*.db;../PrivateKnowledge.Api/bin/$(Configuration)/$(TargetFramework)/**/*.db-*" /></ItemGroup>
+    <Copy SourceFiles="@(LocalServiceFiles)" DestinationFiles="@(LocalServiceFiles->'$(TargetDir)service/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+  <!-- 发布包附带服务及样例；API 自己的 Publish 规则会排除 Workspace 路径。 -->
+  <Target Name="PublishLocalService" AfterTargets="Publish">
+    <MSBuild Projects="../PrivateKnowledge.Api/PrivateKnowledge.Api.csproj" Targets="Publish"
+             Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=$(SelfContained);PublishSingleFile=false;PublishDir=$([System.IO.Path]::GetFullPath('$(PublishDir)service/'))" />
+    <Delete Files="$(PublishDir)service/appsettings.Workspace.json" />
+  </Target>
+</Project>

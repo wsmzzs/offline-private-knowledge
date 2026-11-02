@@ -1,0 +1,21 @@
+# 用途：公开仓库只提交源码与虚构样例，不提交本机私库、配置、索引或运行结果。
+.vs/
+**/bin/
+**/obj/
+**/AvaloniaUI/
+**/TestResults/
+**/local-data/
+**/data/
+**/logs/
+publish/
+release/
+artifacts/
+SampleKnowledge/
+*.user
+*.suo
+*.db
+*.db-*
+*.log
+appsettings.Local.json
+**/appsettings.Workspace.json
+**/settings.json

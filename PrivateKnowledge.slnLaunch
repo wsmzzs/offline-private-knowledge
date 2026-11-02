@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "仅客户端（自动准备本机环境）",
+    "Projects": [
+      { "Path": "src\\PrivateKnowledge.Desktop\\PrivateKnowledge.Desktop.csproj", "Action": "Start" }
+    ]
+  },
+  {
+    "Name": "服务和客户端（服务由IDE独立管理）",
+    "Projects": [
+      { "Path": "src\\PrivateKnowledge.Api\\PrivateKnowledge.Api.csproj", "Action": "Start" },
+      { "Path": "src\\PrivateKnowledge.Desktop\\PrivateKnowledge.Desktop.csproj", "Action": "Start" }
+    ]
+  }
+]

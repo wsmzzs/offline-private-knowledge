@@ -1,0 +1,70 @@
+<!-- 用途：联网浏览官网系列与版本；只下载明确选中的模型，知识问答仍可离线使用。 -->
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:PrivateKnowledge.Desktop.ViewModels"
+        xmlns:api="using:PrivateKnowledge.Client"
+        x:Class="PrivateKnowledge.Desktop.ModelDownloadsWindow" x:DataType="vm:ModelDownloadsViewModel"
+        Title="模型下载 · 离线私库" Width="1050" Height="800" MinWidth="860" MinHeight="640"
+        WindowStartupLocation="CenterOwner" Background="#F6F8FC">
+  <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+    <StackPanel Spacing="8" Margin="0,0,0,16">
+      <TextBlock Text="为你的私库选择一个本地模型" FontSize="23" FontWeight="SemiBold" Foreground="#18365E" />
+      <TextBlock Text="下载需要联网 · 准备完成后，知识问答可离线使用" Foreground="#245AC7" />
+      <TextBlock Text="从 Ollama 官方模型库按需加载。先选系列，再选大小与版本；本机 Ollama 负责下载，文件与知识资料分开。" TextWrapping="Wrap" Classes="muted" />
+      <Border Background="#EAF0FA" CornerRadius="8" Padding="12,10">
+        <TextBlock Text="配置按模型文件大小估算，不是官方最低要求或流畅保证。上下文长度、架构、CPU 与显卡兼容性都会影响实际占用；没有独显也可用 CPU，通常更慢。" TextWrapping="Wrap" Classes="muted" />
+      </Border>
+      <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+        <TextBox Name="LibrarySearch" Text="{Binding SearchText, Mode=TwoWay}" MaxLength="100" Watermark="搜索官方模型，例如 qwen、llama、gemma" KeyDown="OnSearchKeyDown" IsEnabled="{Binding CanChoose}" />
+        <Button Grid.Column="1" Name="SearchLibrary" Content="搜索" Click="OnRefresh" IsEnabled="{Binding CanChoose}" Margin="8,0,0,0" />
+      </Grid>
+      <TextBlock Text="{Binding CatalogHint}" TextWrapping="Wrap" Classes="muted" />
+    </StackPanel>
+    <Grid Grid.Row="1" ColumnDefinitions="240,16,*">
+      <Grid RowDefinitions="Auto,*,Auto">
+        <TextBlock Text="模型系列 · 滑到底部继续加载" FontWeight="SemiBold" Margin="0,0,0,8" />
+        <ListBox Grid.Row="1" Name="LibraryModels" ItemsSource="{Binding Families}" SelectedItem="{Binding SelectedFamily, Mode=OneWay}" SelectionChanged="OnFamilySelected" IsEnabled="{Binding CanChoose}" Background="White" BorderThickness="0">
+          <ListBox.Styles><Style Selector="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch" /></Style></ListBox.Styles>
+          <ListBox.ItemTemplate><DataTemplate x:DataType="api:LibraryFamily">
+            <StackPanel Spacing="6" Margin="6,10">
+              <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Capabilities}" FontSize="12" Foreground="#245AC7" />
+              <TextBlock Text="{Binding Description}" Classes="muted" TextWrapping="Wrap" MaxLines="3" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+          </DataTemplate></ListBox.ItemTemplate>
+        </ListBox>
+        <Button Grid.Row="2" Name="LoadMoreModels" Content="{Binding MoreLabel}" IsEnabled="{Binding CanLoadMore}" Click="OnLoadMore" Margin="0,8,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+      </Grid>
+      <Grid Grid.Column="2" RowDefinitions="Auto,*">
+        <TextBlock Text="{Binding VersionsTitle}" FontWeight="SemiBold" Margin="0,0,0,8" />
+    <ListBox Grid.Row="1" Name="DownloadModels" ItemsSource="{Binding Items}" SelectedItem="{Binding Selected, Mode=TwoWay}"
+             IsEnabled="{Binding CanChoose}" Background="Transparent" BorderThickness="0">
+      <ListBox.Styles><Style Selector="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch" /></Style></ListBox.Styles>
+      <ListBox.ItemTemplate><DataTemplate x:DataType="vm:DownloadModelItem">
+        <StackPanel Spacing="7" Margin="8,10">
+          <TextBlock Text="{Binding Option.Title}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding InstallLabel}" Foreground="#245AC7" />
+          <StackPanel Orientation="Horizontal" Spacing="14">
+            <TextBlock Text="{Binding Option.Size}" FontWeight="SemiBold" />
+          </StackPanel>
+          <TextBlock Text="{Binding Option.Hardware}" TextWrapping="Wrap" Classes="muted" />
+        </StackPanel>
+      </DataTemplate></ListBox.ItemTemplate>
+    </ListBox>
+      </Grid>
+    </Grid>
+    <Border Grid.Row="2" Background="White" CornerRadius="10" Padding="16" Margin="0,16,0,0">
+      <StackPanel Spacing="10">
+        <TextBlock Name="DownloadStatus" Text="{Binding Status}" TextWrapping="Wrap" />
+        <ProgressBar Name="DownloadProgress" Minimum="0" Maximum="100" Value="{Binding Percent}" IsIndeterminate="{Binding Indeterminate}" Height="6" />
+        <TextBlock Text="{Binding ProgressText}" Classes="muted" TextWrapping="Wrap" />
+        <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+          <Button Content="刷新列表" IsEnabled="{Binding CanChoose}" Click="OnRefresh" HorizontalAlignment="Left" />
+          <Button Grid.Column="1" Content="取消下载" IsEnabled="{Binding CanCancel}" Click="OnCancel" Margin="0,0,8,0" />
+          <Button Grid.Column="2" Name="StartDownload" Content="下载所选模型" IsEnabled="{Binding CanDownload}" Click="OnDownload" Margin="0,0,8,0" />
+          <Button Grid.Column="3" Name="UseModel" Content="使用此模型" Classes="primary" IsEnabled="{Binding CanUse}" Click="OnUse" />
+        </Grid>
+        <TextBlock Text="模型库浏览与下载需要联网；准备好模型后可离线问答。此列表排除明确的嵌入、分类专用系列及云端版本。" TextWrapping="Wrap" Classes="muted" />
+      </StackPanel>
+    </Border>
+  </Grid>
+</Window>

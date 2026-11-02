@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 测试真实客户端绑定与状态流转；测试资料和模型明确为模拟，不访问公司资料。 -->
+  <PropertyGroup><TargetFramework>net9.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><IsTestProject>true</IsTestProject><IsPackable>false</IsPackable></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2"><PrivateAssets>all</PrivateAssets></PackageReference>
+    <PackageReference Include="Avalonia.Headless.XUnit" Version="11.3.8" />
+    <ProjectReference Include="../../src/PrivateKnowledge.Desktop/PrivateKnowledge.Desktop.csproj" />
+  </ItemGroup>
+</Project>

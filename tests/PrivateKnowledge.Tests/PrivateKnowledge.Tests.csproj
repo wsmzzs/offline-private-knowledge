@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 测试使用临时虚构资料和本机测试模型接口，不访问公司资料。 -->
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- 独立工具生成的中文 PDF，防止只用解析库自己的英文生成器验证自己。 -->
+    <Content Include="../../checks/PrivateKnowledge.FormatChecks/Samples/中文操作指南.pdf" Link="Samples/中文操作指南.pdf" CopyToOutputDirectory="PreserveNewest" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3"><PrivateAssets>all</PrivateAssets></PackageReference>
+    <ProjectReference Include="../../src/PrivateKnowledge.Api/PrivateKnowledge.Api.csproj" />
+  </ItemGroup>
+</Project>

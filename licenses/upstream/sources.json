@@ -1,0 +1,67 @@
+[
+  {
+    "name": "Avalonia",
+    "source": "https://raw.githubusercontent.com/AvaloniaUI/Avalonia/6dd9eb473b74a56cc42e5bc118cfe918b48a940b/licence.md",
+    "sha256": "213814D306090074D234D760239FF0F67EB9B8D20EEFB4D5631BB39DBE0B769B"
+  },
+  {
+    "name": "Avalonia.BuildServices",
+    "source": "https://raw.githubusercontent.com/AvaloniaUI/Avalonia.BuildServices/ca916200d41e8151a85ef9f6f4683f1898793af5/LICENSE",
+    "sha256": "94162C40C663BD96EC1B870E6ABA6EF0A43F44C9EB500807E7965E7078F6DC47"
+  },
+  {
+    "name": "Dapper",
+    "source": "https://raw.githubusercontent.com/DapperLib/Dapper/2a837ad7d036671ac9a75c9945bb970aa41b7de9/License.txt",
+    "sha256": "9148EBECF47CE49421B0ADC69192384B0619BCDC22C67B8BB30D26882B8A7DB9"
+  },
+  {
+    "name": "OpenXML",
+    "source": "https://raw.githubusercontent.com/dotnet/Open-XML-SDK/3139fdfd27414548a41555f7848d5728f6e71a42/LICENSE",
+    "sha256": "ED03BA352313A4BA7019D5BED4BD3218AC17F3E44442A3BB1AAFF54DCCA9A2BC"
+  },
+  {
+    "name": "HtmlAgilityPack",
+    "source": "https://raw.githubusercontent.com/zzzprojects/html-agility-pack/v1.12.4/LICENSE",
+    "sha256": "601B80E87B30B47C7B5389D3077FDA67A37E7CB6B200405E4524217989C1FE92"
+  },
+  {
+    "name": "MicroCom",
+    "source": "https://raw.githubusercontent.com/kekekeks/MicroCom/cd2fa3c89525fbe7b46bd13f9ec8c77bd829e815/LICENSE",
+    "sha256": "6EE769C9AC4DAC9ABB16B98B1341E9528FF9F4AB685481410D3376D14148F3A9"
+  },
+  {
+    "name": "EFCore",
+    "source": "https://raw.githubusercontent.com/dotnet/efcore/3f7d40ec7be104358780955b3f0fea62495264dc/LICENSE.txt",
+    "sha256": "AE48DF11A335DC1A615F4F938B69CBA73BCF4485C4F97AF49B38EFB0F216353B"
+  },
+  {
+    "name": "AspNetCore",
+    "source": "https://raw.githubusercontent.com/dotnet/aspnetcore/e5f183b656a0e8bc087108130a5a9b54ae94494e/LICENSE.txt",
+    "sha256": "CFC21F5E8BD655AE997EEC916138B707B1D290B83272C02A95C9F821B8C87310"
+  },
+  {
+    "name": "OpenAPI",
+    "source": "https://raw.githubusercontent.com/microsoft/OpenAPI.NET/ec6a1d47550199f0cc05fa25a49ce8ce135f783d/LICENSE",
+    "sha256": "5D177F23ECFEB0EA8E050B6A5A16355E1AE9A0B286436CA8F83ED08B3795BE6B"
+  },
+  {
+    "name": "PdfPig",
+    "source": "https://raw.githubusercontent.com/UglyToad/PdfPig/a7bb35662bbbf405efddad50aedc9bcdcf515afc/LICENSE",
+    "sha256": "4C510E162F896EA43B4B1CF1B743641D7C756F1004D0E5EAF0615B28B7DED409"
+  },
+  {
+    "name": "SQLitePCLRaw",
+    "source": "https://raw.githubusercontent.com/ericsink/SQLitePCL.raw/v2.1.10/LICENSE.TXT",
+    "sha256": "CFC7749B96F63BD31C3C42B5C471BF756814053E847C10F3EB003417BC523D30"
+  },
+  {
+    "name": "Swashbuckle",
+    "source": "https://raw.githubusercontent.com/domaindrivendev/Swashbuckle.AspNetCore/fe87e6d4ce56cda59474763067b929d4d92fd146/LICENSE",
+    "sha256": "C87A9AB2520595BC7C31343B5250E8F3779A65C6051612118B0ACCD200F24D07"
+  },
+  {
+    "name": "Tmds.DBus",
+    "source": "https://raw.githubusercontent.com/tmds/Tmds.DBus/f0b2c29f57bdc7efaeccaa61ca9f13e9a0eebff7/COPYING",
+    "sha256": "ACA3B49277ABCC7886CCB2F115603A9F5B15FC3F96019A10C00F2974098B210C"
+  }
+]

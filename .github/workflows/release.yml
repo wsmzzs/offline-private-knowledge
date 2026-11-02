@@ -1,0 +1,69 @@
+# 用途：明确修改发布版本时，在 GitHub 上先测试再生成公开包；已有 Release 不覆盖，不下载模型。
+name: Publish Windows release
+on:
+  push:
+    branches: [main]
+    paths: [.github/release.json]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: publish-windows-release
+  cancel-in-progress: false
+jobs:
+  windows-release:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    # 仅发布任务需要创建标签、Release 和附件；不需要个人 Token 或额外仓库密钥。
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: Restore and test without models
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet restore PrivateKnowledge.sln
+          if ($LASTEXITCODE -ne 0) { throw '依赖还原失败' }
+          dotnet test PrivateKnowledge.sln -c Release --no-restore
+          if ($LASTEXITCODE -ne 0) { throw '自动测试失败，停止发布' }
+      - name: Build audited public packages
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = (Get-Content .github/release.json -Raw | ConvertFrom-Json).version
+          # 版本来自受版本管理的固定配置；不接受任意命令或路径。
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw '发布版本必须是三段数字' }
+          ./scripts/build-release.ps1 -Version $version
+      - name: Publish a new release without overwriting existing assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = (Get-Content .github/release.json -Raw | ConvertFrom-Json).version
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw '发布版本必须是三段数字' }
+          $tag = 'v' + $version
+          # 同一版本重跑只核对存在性；不删除、不替换别人已经下载过的 Release。
+          gh release view $tag --repo $env:GITHUB_REPOSITORY --json tagName
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host '此版本已经发布，本次不覆盖。'
+            exit 0
+          }
+          $packages = @(Get-ChildItem release -Directory | Where-Object Name -Like ('v' + $version + '-*'))
+          if ($packages.Count -ne 1) { throw '无法唯一确定本次构建包目录' }
+          $folder = $packages[0].FullName
+          $source = Join-Path $folder ('offline-private-knowledge-v' + $version + '-source.zip')
+          $windows = Join-Path $folder ('offline-private-knowledge-v' + $version + '-win-x64.zip')
+          $hashes = Join-Path $folder 'SHA256SUMS.txt'
+          $info = Join-Path $folder 'release-info.json'
+          foreach ($file in @($source,$windows,$hashes,$info)) {
+            if (!(Test-Path -LiteralPath $file -PathType Leaf)) { throw '发布附件不完整' }
+          }
+          gh release create $tag $source $windows $hashes $info --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title ($tag + ' · 离线私库 · 有据问答') --notes-file docs/RELEASE_NOTES.md
+          if ($LASTEXITCODE -ne 0) { throw 'Release 发布未完成，请检查实际结果后重试' }

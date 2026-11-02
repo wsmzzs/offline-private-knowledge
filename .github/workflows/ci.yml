@@ -1,0 +1,26 @@
+# 用途：公开仓库的编译与离线协议回归；不安装 Ollama，不下载模型，不上传资料或测试输出。
+name: Build and test
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: Restore
+        run: dotnet restore PrivateKnowledge.sln
+      - name: Build
+        run: dotnet build PrivateKnowledge.sln -c Release --no-restore
+      - name: Test without a real model
+        run: dotnet test PrivateKnowledge.sln -c Release --no-build --no-restore
+      - name: Check a clean public source copy
+        shell: pwsh
+        run: ./scripts/export-source.ps1 -Destination (Join-Path $env:RUNNER_TEMP 'public-source-check')
